@@ -1,10 +1,10 @@
-// backend/app.js
+// app.js
 import express from "express";
 import productRoute from "./routes/productRoute.js";
 import userRoute from "./routes/userRoute.js";
 import orderRoute from "./routes/orderRoute.js";
 import paymentRoute from "./routes/paymentRoute.js";
-import errorMiddleWare from "./middleware/error.js";   // 🔥 FIXED: no "backend" here
+import errorMiddleWare from "./middleware/error.js";
 
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
@@ -12,8 +12,7 @@ import fileUpload from "express-fileupload";
 import cors from "cors";
 import * as dotenv from "dotenv";
 
-// Load env from backend/.env
-dotenv.config({ path: "./.env" });    // ✅ because .env is inside backend
+dotenv.config(); // or dotenv.config({ path: "./.env" });
 
 const app = express();
 
@@ -25,7 +24,7 @@ app.use(
   })
 );
 
-// JSON body with rawBody for Razorpay (or Stripe)
+// JSON body with raw body support if you need it
 app.use(
   express.json({
     limit: "5mb",
