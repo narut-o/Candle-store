@@ -27,7 +27,7 @@ export const instance = new Razorpay({
     key_secret:process.env.RAZORPAY_API_SECRET
 })
 
-
+app.set("trust proxy", 1);
 
 //Unhandled Promise Rejection
 process.on("unhandledRejection",(error)=>{
