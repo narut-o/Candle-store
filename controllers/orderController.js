@@ -43,26 +43,47 @@ export const myOrders = catchAsyncError(async(req,res,next)=>{
     });
 });
 // Get all orders only for admin
-export const getAllOrders = catchAsyncError(async(req,res,next)=>{
-    const orders = await Order.find();
-    let totalAmount = 0;
-    orders.forEach(order=>totalAmount+=order.totalPrice);
+// Get all orders only for admin (paginated)
+export const getAllOrders = catchAsyncError(async (req, res, next) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20; // 20 per page
+  const skip = (page - 1) * limit;
 
+  const totalOrders = await Order.countDocuments();
 
-    res.status(200).json({
-        success:true,
-        orders,
-        totalAmount
-    });
+  const orders = await Order.find()
+    .populate("user", "name email")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  // total revenue over ALL orders (not just current page)
+  const totalAgg = await Order.aggregate([
+    { $group: { _id: null, totalAmount: { $sum: "$totalPrice" } } },
+  ]);
+  const totalAmount = totalAgg[0]?.totalAmount || 0;
+
+  res.status(200).json({
+    success: true,
+    orders,
+    totalAmount,
+    totalOrders,
+    resultPerPage: limit,
+    currentPage: page,
+    totalPages: Math.ceil(totalOrders / limit),
+  });
 });
 //Update order status only for admin
 export const updateOrder = catchAsyncError(async(req,res,next)=>{
+     console.log("back",req.body);
     const order = await Order.findById(req.params.id);
     if(!order) return next(new ErrorHandler("Order not found"),404);
     if(order.orderStatus==="Delivered")return next(new ErrorHandler("Order already delivered"),400);
-
+    
     order.orderItems.forEach( async (order)=>await updateStock(order.product,order.quantity));
     order.orderStatus = req.body.status;
+   
+
     if(req.body.status==="Delivered")
     order.deliveredAt = Date.now();
     await order.save();
